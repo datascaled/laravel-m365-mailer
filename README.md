@@ -1,68 +1,104 @@
-# :package_description
+# Laravel M365 Mailer
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/:vendor_slug/:package_slug/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/:vendor_slug/:package_slug/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/:vendor_slug/:package_slug.svg?style=flat-square)](https://packagist.org/packages/:vendor_slug/:package_slug)
-<!--delete-->
----
-This repo can be used to scaffold a Laravel package. Follow these steps to get started:
+A Laravel mail transport driver for Microsoft 365 / Microsoft Graph with optional GDPR-conscious database logging.
 
-1. Press the "Use this template" button at the top of this repo to create a new repo with the contents of this skeleton.
-2. Run "php ./configure.php" to run a script that will replace all placeholders throughout all the files.
-3. Have fun creating your package.
-4. If you need help creating a package, consider picking up our <a href="https://laravelpackage.training">Laravel Package Training</a> video course.
----
-<!--/delete-->
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+## Features
 
-## Support us
+- Full Laravel mailer transport (`transport: m365`) for Mailables, Notifications, and queued mails.
+- Client-credentials flow (`tenant_id`, `client_id`, `client_secret`).
+- Optional DB-backed message status history (`queued`, `sending`, `sent`, `failed`).
+- GDPR-oriented defaults: recipient masking + hashing; plaintext recipient storage is opt-in.
+- Built-in retention cleanup command: `m365-mail:prune`.
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/:package_name.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/:package_name)
+## Requirements
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- PHP 8.3+
+- Laravel 11 or 12
 
 ## Installation
 
-You can install the package via composer:
-
 ```bash
-composer require :vendor_slug/:package_slug
+composer require datascaled/laravel-m365-mailer
 ```
 
-You can publish and run the migrations with:
+## Quick Start (No DB Logging)
+
+1. Configure an `m365` mailer in `config/mail.php`.
+
+```php
+'mailers' => [
+    // ...
+    'm365' => [
+        'transport' => 'm365',
+        'tenant_id' => env('M365_TENANT_ID'),
+        'client_id' => env('M365_CLIENT_ID'),
+        'client_secret' => env('M365_CLIENT_SECRET'),
+        'sender' => env('M365_SENDER', 'no-reply@your-domain.com'),
+        'timeout' => env('M365_MAIL_TIMEOUT', 15),
+    ],
+],
+```
+
+2. Use it as default mailer or explicitly when sending:
+
+```php
+Mail::mailer('m365')->to('user@example.com')->send(new WelcomeMail());
+```
+
+With default config, package logging is disabled and no package-specific DB writes are made.
+
+## Advanced Setup (Enable DB Logging)
+
+1. Publish package config and migrations:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-migrations"
+php artisan vendor:publish --tag="m365-mailer-config"
+php artisan vendor:publish --tag="m365-mailer-migrations"
 php artisan migrate
 ```
 
-You can publish the config file with:
+2. Enable logging in `config/m365-mailer.php` or `.env`:
+
+```env
+M365_MAIL_LOGGING_ENABLED=true
+M365_MAIL_LOGGING_REQUIRE_DATABASE=true
+M365_MAIL_LOGGING_RETENTION_DAYS=30
+M365_MAIL_LOGGING_STORE_RECIPIENTS_PLAINTEXT=false
+```
+
+## Configuration Reference
+
+`config/m365-mailer.php` contains:
+
+- `timeout`
+- `save_to_sent_items`
+- `cache_store`
+- `logging.enabled`
+- `logging.retention_days`
+- `logging.store_recipients_plaintext`
+- `logging.require_database`
+- `logging.recipient_hash_key`
+
+Per-mailer credentials and sender remain in `config/mail.php` under `mail.mailers.m365`.
+
+## Logging Behavior
+
+- `logging.enabled = false`: package performs no DB logging.
+- `logging.enabled = true` + `require_database = true`: missing tables cause a hard fail before sending.
+- If Graph accepts the message but post-send DB logging fails, sending is not rethrown (prevents duplicate deliveries on queue retry).
+
+## Retention / Pruning
+
+Delete old log data:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-config"
+php artisan m365-mail:prune
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
+Override retention window:
 
 ```bash
-php artisan vendor:publish --tag=":package_slug-views"
-```
-
-## Usage
-
-```php
-$:variable = new VendorName\Skeleton();
-echo $:variable->echoPhrase('Hello, VendorName!');
+php artisan m365-mail:prune --days=14
 ```
 
 ## Testing
@@ -71,23 +107,6 @@ echo $:variable->echoPhrase('Hello, VendorName!');
 composer test
 ```
 
-## Changelog
-
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-- [:author_name](https://github.com/:author_username)
-- [All Contributors](../../contributors)
-
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+MIT
