@@ -16,7 +16,6 @@ use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Message;
 use Symfony\Component\Mime\MessageConverter;
 use Throwable;
@@ -45,7 +44,7 @@ final class M365Transport extends AbstractTransport
 
         $email = MessageConverter::toEmail($originalMessage);
         $attempt = $this->attemptResolver->resolve();
-        $sender = $this->resolveSender($email);
+        $sender = $this->resolveSender();
         $messageUuid = (string) Str::uuid();
         $symfonyMessageId = $message->getMessageId();
 
@@ -85,15 +84,9 @@ final class M365Transport extends AbstractTransport
         return 'm365';
     }
 
-    private function resolveSender(Email $email): string
+    private function resolveSender(): string
     {
-        $from = $email->getFrom();
-
-        if ($from === []) {
-            return $this->config->sender;
-        }
-
-        return $from[0]->getAddress();
+        return $this->config->sender;
     }
 
     /**

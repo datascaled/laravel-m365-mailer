@@ -19,8 +19,24 @@ it('sends without logging and does not write package rows', function (): void {
     });
 
     expect($graphClient->calls)->toHaveCount(1);
+    expect($graphClient->calls[0]['sender'])->toBe('mail-from@example.com');
     expect(DB::table('m365_mail_messages')->count())->toBe(0);
     expect(DB::table('m365_mail_events')->count())->toBe(0);
+});
+
+it('always uses MAIL_FROM_ADDRESS as sender, even when a message from is set', function (): void {
+    $this->configureLogging(enabled: false);
+
+    $graphClient = $this->installGraphFakes();
+
+    Mail::mailer('m365')->raw('Body', function ($message): void {
+        $message->from('override@example.com', 'Override');
+        $message->to('alice@example.com')->subject('Sender override');
+    });
+
+    expect($graphClient->calls)->toHaveCount(1);
+    expect($graphClient->calls[0]['sender'])->toBe('mail-from@example.com');
+    expect($graphClient->calls[0]['payload']['message']['from']['emailAddress']['address'])->toBe('mail-from@example.com');
 });
 
 it('writes status history when logging is enabled', function (): void {
@@ -88,7 +104,7 @@ it('does not throw when post-send logging fails after successful delivery', func
         Schema::drop('m365_mail_events');
 
         return [
-            'endpoint' => '/users/sender%40example.com/sendMail',
+            'endpoint' => '/users/mail-from%40example.com/sendMail',
             'status' => 202,
             'headers' => [],
             'body' => [],

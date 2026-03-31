@@ -33,7 +33,6 @@ composer require datascaled/laravel-m365-mailer
         'tenant_id' => env('M365_TENANT_ID'),
         'client_id' => env('M365_CLIENT_ID'),
         'client_secret' => env('M365_CLIENT_SECRET'),
-        'sender' => env('M365_SENDER', 'no-reply@your-domain.com'),
         'timeout' => env('M365_MAIL_TIMEOUT', 15),
     ],
 ],
@@ -79,7 +78,8 @@ M365_MAIL_LOGGING_STORE_RECIPIENTS_PLAINTEXT=false
 - `logging.require_database`
 - `logging.recipient_hash_key`
 
-Per-mailer credentials and sender remain in `config/mail.php` under `mail.mailers.m365`.
+Per-mailer credentials remain in `config/mail.php` under `mail.mailers.m365`.
+The sender is always taken from `mail.from.address` (`MAIL_FROM_ADDRESS`).
 
 ## Logging Behavior
 

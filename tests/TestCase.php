@@ -34,12 +34,15 @@ class TestCase extends Orchestra
         ]);
 
         $app['config']->set('mail.default', 'm365');
+        $app['config']->set('mail.from', [
+            'address' => 'mail-from@example.com',
+            'name' => 'App Mailer',
+        ]);
         $app['config']->set('mail.mailers.m365', [
             'transport' => 'm365',
             'tenant_id' => 'tenant-id',
             'client_id' => 'client-id',
             'client_secret' => 'client-secret',
-            'sender' => 'sender@example.com',
             'timeout' => 10,
         ]);
 

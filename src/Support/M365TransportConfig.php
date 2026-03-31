@@ -37,10 +37,10 @@ final class M365TransportConfig
         $clientId = self::requiredString($mailerConfig, 'client_id');
         $clientSecret = self::requiredString($mailerConfig, 'client_secret');
 
-        $sender = trim((string) ($mailerConfig['sender'] ?? ''));
+        $sender = trim((string) config('mail.from.address', ''));
 
         if ($sender === '') {
-            throw new InvalidArgumentException('M365 mailer config requires a non-empty "sender" value.');
+            throw new InvalidArgumentException('M365 transport requires "mail.from.address" (MAIL_FROM_ADDRESS) to be configured.');
         }
 
         $timeout = max(1, (int) ($mailerConfig['timeout'] ?? $packageConfig['timeout'] ?? 15));
