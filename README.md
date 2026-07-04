@@ -13,7 +13,7 @@ A Laravel mail transport driver for Microsoft 365 / Microsoft Graph with optiona
 ## Requirements
 
 - PHP 8.3+
-- Laravel 11 or 12
+- Laravel 11, 12, or 13
 
 ## Installation
 

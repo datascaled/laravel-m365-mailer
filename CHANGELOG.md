@@ -2,6 +2,10 @@
 
 All notable changes to `datascaled/laravel-m365-mailer` will be documented in this file.
 
+## 0.1.2 - 2026-07-02
+
+- Added Laravel 13 support to Composer constraints and package testbench compatibility.
+
 ## 0.1.0 - 2026-03-29
 
 - Added a full Laravel `m365` mail transport based on Microsoft Graph.
